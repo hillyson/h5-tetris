@@ -73,3 +73,41 @@ body {
   background-color: #cccccc;
   cursor: not-allowed;
 }
+
+.control-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+#dropBtn, #pauseBtn {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#dropBtn {
+  background-color: #2196F3;
+}
+
+#dropBtn:hover {
+  background-color: #1976D2;
+}
+
+#pauseBtn {
+  background-color: #FF9800;
+}
+
+#pauseBtn:hover {
+  background-color: #F57C00;
+}
+
+#dropBtn:disabled, #pauseBtn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}

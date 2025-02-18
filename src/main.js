@@ -1,5 +1,7 @@
 import './style.css';
 
+// 游戏初始化
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const nextPieceCanvas = document.getElementById('nextPieceCanvas');
@@ -44,6 +46,7 @@ let score = 0;
 let level = 1;
 let lines = 0;
 let gameOver = false;
+let isPaused = false;
 
 function createPiece() {
   const pieceIndex = Math.floor(Math.random() * (SHAPES.length - 1)) + 1;
@@ -115,120 +118,108 @@ function mergePiece() {
   });
 }
 
+let dropSpeed = 1000;
+let isQuickDropping = false;
+let clearingLines = false;
+
 function clearLines() {
   let linesCleared = 0;
+  let linesToClear = [];
+  
   for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
     if (board[y].every(cell => cell !== 0)) {
-      board.splice(y, 1);
-      board.unshift(Array(BOARD_WIDTH).fill(0));
+      linesToClear.push(y);
       linesCleared++;
-      y++;
     }
   }
+  
   if (linesCleared > 0) {
-    lines += linesCleared;
-    score += linesCleared * 100 * level;
-    level = Math.floor(lines / 10) + 1;
-    updateScore();
+    clearingLines = true;
+    animateClearLines(linesToClear, () => {
+      linesToClear.forEach(y => {
+        board.splice(y, 1);
+        board.unshift(Array(BOARD_WIDTH).fill(0));
+      });
+      lines += linesCleared;
+      score += linesCleared * 100 * level;
+      level = Math.floor(lines / 10) + 1;
+      updateScore();
+      clearingLines = false;
+      draw();
+    });
   }
 }
 
-function updateScore() {
-  scoreElement.textContent = score;
-  levelElement.textContent = level;
-  linesElement.textContent = lines;
+function animateClearLines(lineIndices, callback) {
+  const duration = 500; // 动画持续时间（毫秒）
+  const startTime = Date.now();
+  
+  function animate() {
+    const currentTime = Date.now();
+    const progress = (currentTime - startTime) / duration;
+    
+    if (progress >= 1) {
+      callback();
+      return;
+    }
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBoard();
+    
+    lineIndices.forEach(y => {
+      const centerX = Math.floor(BOARD_WIDTH / 2);
+      for (let x = 0; x < BOARD_WIDTH; x++) {
+        if (board[y][x] !== 0) {
+          const distanceFromCenter = Math.abs(x - centerX);
+          const maxDistance = Math.max(centerX, BOARD_WIDTH - centerX);
+          const normalizedDistance = distanceFromCenter / maxDistance;
+          const alpha = Math.max(0, 1 - (progress + normalizedDistance * 0.8));
+          
+          ctx.globalAlpha = alpha;
+          drawBlock(x, y, COLORS[board[y][x]]);
+          ctx.globalAlpha = 1.0;
+        }
+      }
+    });
+    
+    if (currentPiece) {
+      drawGhostPiece();
+      drawPiece(currentPiece, currentPieceX, currentPieceY);
+    }
+    drawNextPiece();
+    
+    requestAnimationFrame(animate);
+  }
+  
+  animate();
+}
+
+function quickDrop() {
+  if (!gameInterval || gameOver || isPaused || clearingLines) return;
+  
+  isQuickDropping = true;
+  dropSpeed = 20; // 加快下落速度
+  
+  function animateQuickDrop() {
+    if (!isQuickDropping || checkCollision(currentPiece, currentPieceX, currentPieceY + 1)) {
+      isQuickDropping = false;
+      dropSpeed = 1000 / level;
+      moveDown();
+      return;
+    }
+    
+    currentPieceY++;
+    draw();
+    setTimeout(animateQuickDrop, dropSpeed);
+  }
+  
+  animateQuickDrop();
 }
 
 function gameLoop() {
-  moveDown();
-}
-
-function moveDown() {
-  if (!checkCollision(currentPiece, currentPieceX, currentPieceY + 1)) {
-    currentPieceY++;
-    draw();
-  } else {
-    mergePiece();
-    clearLines();
-    if (currentPieceY <= 0) {
-      gameOver = true;
-      endGame();
-      return;
-    }
-    currentPiece = nextPiece;
-    nextPiece = createPiece();
-    currentPieceX = Math.floor((BOARD_WIDTH - currentPiece[0].length) / 2);
-    currentPieceY = 0;
-    draw();
+  if (!isPaused && !clearingLines) {
+    moveDown();
   }
-}
-
-function moveLeft() {
-  if (!checkCollision(currentPiece, currentPieceX - 1, currentPieceY)) {
-    currentPieceX--;
-    draw();
-  }
-}
-
-function moveRight() {
-  if (!checkCollision(currentPiece, currentPieceX + 1, currentPieceY)) {
-    currentPieceX++;
-    draw();
-  }
-}
-
-function rotate() {
-  const rotatedPiece = rotatePiece(currentPiece);
-  if (!checkCollision(rotatedPiece, currentPieceX, currentPieceY)) {
-    currentPiece = rotatedPiece;
-    draw();
-  }
-}
-
-function calculateShadowY() {
-  let shadowY = currentPieceY;
-  while (!checkCollision(currentPiece, currentPieceX, shadowY + 1)) {
-    shadowY++;
-  }
-  return shadowY;
-}
-
-function drawShadow() {
-  const shadowY = calculateShadowY();
-  
-  // 绘制半透明的影子方块
-  ctx.globalAlpha = 0.3;
-  drawPiece(currentPiece, currentPieceX, shadowY);
-  ctx.globalAlpha = 1.0;
-  
-  // 绘制虚线连接
-  currentPiece.forEach((row, dy) => {
-    row.forEach((value, dx) => {
-      if (value !== 0) {
-        const startX = (currentPieceX + dx) * BLOCK_SIZE + BLOCK_SIZE / 2;
-        const startY = (currentPieceY + dy) * BLOCK_SIZE + BLOCK_SIZE / 2;
-        const endY = (shadowY + dy) * BLOCK_SIZE + BLOCK_SIZE / 2;
-        
-        ctx.beginPath();
-        ctx.setLineDash([5, 5]);
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(startX, endY);
-        ctx.strokeStyle = '#666';
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    });
-  });
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBoard();
-  if (currentPiece) {
-    drawShadow();
-    drawPiece(currentPiece, currentPieceX, currentPieceY);
-  }
-  drawNextPiece();
 }
 
 function startGame() {
@@ -239,6 +230,8 @@ function startGame() {
   level = 1;
   lines = 0;
   gameOver = false;
+  isPaused = false;
+  dropSpeed = 1000;
   updateScore();
   
   currentPiece = createPiece();
@@ -247,8 +240,11 @@ function startGame() {
   currentPieceY = 0;
   
   draw();
-  gameInterval = setInterval(gameLoop, 1000 / level);
+  gameInterval = setInterval(gameLoop, dropSpeed);
   startBtn.disabled = true;
+  dropBtn.disabled = false;
+  pauseBtn.disabled = false;
+  pauseBtn.textContent = '暂停游戏';
 }
 
 function endGame() {
@@ -256,10 +252,97 @@ function endGame() {
   gameInterval = null;
   alert('游戏结束！得分：' + score);
   startBtn.disabled = false;
+  dropBtn.disabled = true;
+  pauseBtn.disabled = true;
 }
 
+function togglePause() {
+  if (!gameInterval || gameOver) return;
+  
+  isPaused = !isPaused;
+  pauseBtn.textContent = isPaused ? '继续游戏' : '暂停游戏';
+}
+
+// 触摸相关变量
+let touchStartX = 0;
+let touchStartY = 0;
+let touchStartTime = 0;
+
+// 触摸开始
+canvas.addEventListener('touchstart', (e) => {
+  if (gameOver || isPaused) return;
+  e.preventDefault();
+  
+  const touch = e.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+  touchStartTime = Date.now();
+});
+
+// 触摸移动
+canvas.addEventListener('touchmove', (e) => {
+  if (gameOver || isPaused || clearingLines) return;
+  e.preventDefault();
+  
+  const touch = e.touches[0];
+  const deltaX = touch.clientX - touchStartX;
+  const deltaY = touch.clientY - touchStartY;
+  
+  // 水平滑动距离超过30像素时移动方块
+  if (Math.abs(deltaX) > 30) {
+    if (deltaX > 0) {
+      moveRight();
+    } else {
+      moveLeft();
+    }
+    touchStartX = touch.clientX;
+  }
+  
+  // 下滑加速，根据滑动距离动态调整速度
+  if (deltaY > 100) { // 增加下滑触发阈值
+    isQuickDropping = true;
+    // 调整速度范围为200ms-1000ms，使用更平缓的计算方式
+    const speedRange = 800; // 速度变化范围
+    const maxSpeed = 1000; // 最慢速度
+    const minSpeed = 200;  // 最快速度
+    const normalizedDelta = Math.min(deltaY, speedRange) / speedRange;
+    dropSpeed = maxSpeed - (normalizedDelta * (maxSpeed - minSpeed));
+    moveDown();
+  }
+});
+
+canvas.addEventListener('touchend', (e) => {
+  if (gameOver || isPaused || clearingLines) return;
+  e.preventDefault();
+  
+  // 恢复正常下落速度
+  isQuickDropping = false;
+  dropSpeed = 1000 / level;
+  
+  const touchEndTime = Date.now();
+  const touchDuration = touchEndTime - touchStartTime;
+  
+  const touch = e.changedTouches[0];
+  const deltaX = touch.clientX - touchStartX;
+  const deltaY = touch.clientY - touchStartY;
+  const touchDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  
+  if (touchDuration < 200 && touchDistance < 20) {
+    rotate();
+  }
+  
+  // 重置触摸状态变量
+  touchStartX = 0;
+  touchStartY = 0;
+  touchStartTime = 0;
+});
+
+// 触摸取消
+canvas.addEventListener('touchcancel', () => {});
+
+// 添加键盘事件监听
 document.addEventListener('keydown', (e) => {
-  if (gameOver) return;
+  if (gameOver || !gameInterval) return;
   
   switch (e.key) {
     case 'ArrowLeft':
@@ -278,3 +361,107 @@ document.addEventListener('keydown', (e) => {
 });
 
 startBtn.addEventListener('click', startGame);
+const dropBtn = document.getElementById('dropBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+
+dropBtn.addEventListener('click', quickDrop);
+pauseBtn.addEventListener('click', togglePause);
+
+// 初始化按钮状态
+dropBtn.disabled = true;
+pauseBtn.disabled = true;
+function updateScore() {
+  scoreElement.textContent = score;
+  levelElement.textContent = level;
+  linesElement.textContent = lines;
+}
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBoard();
+  if (currentPiece) {
+    drawGhostPiece();
+    drawPiece(currentPiece, currentPieceX, currentPieceY);
+  }
+  drawNextPiece();
+}
+
+function drawGhostPiece() {
+  if (!currentPiece) return;
+  
+  let ghostY = currentPieceY;
+  while (!checkCollision(currentPiece, currentPieceX, ghostY + 1)) {
+    ghostY++;
+  }
+  
+  // 绘制虚线连接
+  currentPiece.forEach((row, dy) => {
+    row.forEach((value, dx) => {
+      if (value !== 0) {
+        ctx.beginPath();
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = COLORS[value];
+        ctx.moveTo((currentPieceX + dx) * BLOCK_SIZE + BLOCK_SIZE / 2, (currentPieceY + dy) * BLOCK_SIZE + BLOCK_SIZE / 2);
+        ctx.lineTo((currentPieceX + dx) * BLOCK_SIZE + BLOCK_SIZE / 2, (ghostY + dy) * BLOCK_SIZE + BLOCK_SIZE / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
+  });
+  
+  ctx.globalAlpha = 0.3;
+  drawPiece(currentPiece, currentPieceX, ghostY);
+  ctx.globalAlpha = 1.0;
+}
+function moveLeft() {
+  if (!gameInterval || gameOver || isPaused || clearingLines) return;
+  if (!checkCollision(currentPiece, currentPieceX - 1, currentPieceY)) {
+    currentPieceX--;
+    draw();
+  }
+}
+
+function moveRight() {
+  if (!gameInterval || gameOver || isPaused || clearingLines) return;
+  if (!checkCollision(currentPiece, currentPieceX + 1, currentPieceY)) {
+    currentPieceX++;
+    draw();
+  }
+}
+
+function moveDown() {
+  if (!gameInterval || gameOver || isPaused || clearingLines) return;
+  
+  if (!checkCollision(currentPiece, currentPieceX, currentPieceY + 1)) {
+    currentPieceY++;
+    draw();
+  } else {
+    mergePiece();
+    clearLines();
+    
+    if (currentPieceY === 0) {
+      gameOver = true;
+      endGame();
+      return;
+    }
+    
+    // 重置所有与下落速度相关的状态，确保下一个方块从正常速度开始
+    isQuickDropping = false;
+    dropSpeed = 1000 / level;
+    
+    currentPiece = nextPiece;
+    nextPiece = createPiece();
+    currentPieceX = Math.floor((BOARD_WIDTH - currentPiece[0].length) / 2);
+    currentPieceY = 0;
+    draw();
+  }
+}
+
+function rotate() {
+  if (!gameInterval || gameOver || isPaused || clearingLines) return;
+  
+  const rotatedPiece = rotatePiece(currentPiece);
+  if (!checkCollision(rotatedPiece, currentPieceX, currentPieceY)) {
+    currentPiece = rotatedPiece;
+    draw();
+  }
+}
