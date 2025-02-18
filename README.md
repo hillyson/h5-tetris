@@ -28,7 +28,7 @@
 1. 克隆项目到本地：
 
 ```bash
-git clone [项目地址]
+git clone https://github.com/hillyson/h5-tetris.git
 cd h5-tetris
 ```
 
