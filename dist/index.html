@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/assets/favicon-D82jHJpc.ico" />
+    <title>俄罗斯方块</title>
+    <script type="module" crossorigin src="/assets/index-BrjMpesi.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D8hdwnKA.css">
+  </head>
+  <body>
+    <div id="app">
+      <div class="game-container">
+        <canvas id="gameCanvas" width="300" height="600"></canvas>
+        <div class="game-info">
+          <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
+          <div class="next-piece-label">下一个方块</div>
+          <div class="score">分数：<span id="score">0</span></div>
+          <div class="level">等级：<span id="level">1</span></div>
+          <div class="lines">消除行数：<span id="lines">0</span></div>
+          <button id="startBtn">开始游戏</button>
+          <div class="control-buttons">
+            <button id="dropBtn">快速下落</button>
+            <button id="pauseBtn">暂停游戏</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
