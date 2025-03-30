@@ -35,6 +35,30 @@ body {
   min-width: 150px;
 }
 
+.instructions {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  width: 200px;
+}
+
+.instructions-title {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.instructions-content {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+}
+
 #nextPieceCanvas {
   border: 2px solid #333;
   background-color: #f8f9fa;
