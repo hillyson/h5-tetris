@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="./dist/assets/favicon-D82jHJpc.ico" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
     <title>俄罗斯方块</title>
   </head>
   <body>
@@ -13,17 +13,19 @@
         <div class="game-info">
           <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
           <div class="next-piece-label">下一个方块</div>
-          <div class="score">分数：<span id="score">0</span></div>
-          <div class="level">等级：<span id="level">1</span></div>
-          <div class="lines">消除行数：<span id="lines">0</span></div>
+          <div class="level" hidden="true">等级：<span id="level">1</span></div>
+          <div class="score-line-container">
+            <div class="score">分数：<span id="score">0</span></div>
+            <div class="lines">消除行数：<span id="lines">0</span></div>
+          </div>
           <button id="startBtn">开始游戏</button>
           <div class="control-buttons">
             <button id="dropBtn">快速下落</button>
             <button id="pauseBtn">暂停游戏</button>
           </div>
           <div class="instructions">
-            <div class="instructions-title">键盘操作:</div>
             <div class="instructions-content">
+              键盘操作:<br>
               ↑ 旋转方块<br>
               ← → 移动方向<br>
               ↓ 加速下落<br>
@@ -37,7 +39,7 @@
         </div>
       </div>
     </div>
-    <link rel="stylesheet" href="./dist/assets/index-D8hdwnKA.css">
-    <script src="./dist/assets/index-BrjMpesi.js"></script>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./main.js" type="module"></script>
   </body>
 </html>

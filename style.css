@@ -21,6 +21,9 @@ body {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  width: fit-content;
+  height: 640px;
+  overflow: auto; /* 改为auto以便滚动查看 */
 }
 
 #gameCanvas {
@@ -31,19 +34,22 @@ body {
 .game-info {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
   min-width: 150px;
+  height: auto;
 }
 
 .instructions {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
+  position: relative;
   background-color: white;
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   width: 200px;
+  margin-top: 15px;
+  flex-shrink: 0;
+  max-height: 300px; /* 限制最大高度 */
+  overflow-y: auto; /* 允许垂直滚动 */
 }
 
 .instructions-title {
@@ -69,16 +75,21 @@ body {
   font-size: 16px;
   color: #333;
   text-align: center;
-  margin-bottom: 10px;
 }
 
 .score, .level, .lines {
-  font-size: 18px;
+  font-size: 14px;
   color: #333;
+  margin: 2px 0;
+  line-height: 1.2;
+}
+
+.score-line-container {
+  display: flex;
+  gap: 10px;
 }
 
 #startBtn {
-  margin-top: 20px;
   padding: 10px 20px;
   font-size: 16px;
   color: white;
