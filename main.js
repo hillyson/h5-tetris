@@ -1,5 +1,3 @@
-import './style.css';
-
 // 游戏初始化
 
 const canvas = document.getElementById('gameCanvas');
