@@ -9,7 +9,15 @@ const scoreElement = document.getElementById('score');
 const levelElement = document.getElementById('level');
 const linesElement = document.getElementById('lines');
 
-const BLOCK_SIZE = 30;
+let BLOCK_SIZE = 30;
+
+function calculateBlockSize() {
+  const container = document.querySelector('.game-container');
+  const containerWidth = container.clientWidth;
+  const displayWidth = Math.floor(containerWidth * 0.5);
+  BLOCK_SIZE = Math.floor(displayWidth / BOARD_WIDTH);
+  return BLOCK_SIZE;
+}
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
 const COLORS = [
@@ -77,11 +85,26 @@ function drawPiece(piece, x, y, context = ctx) {
 }
 
 function drawNextPiece() {
+  // 确保canvas的width/height属性与CSS设置一致
+  nextPieceCanvas.width = nextPieceCanvas.clientWidth;
+  nextPieceCanvas.height = nextPieceCanvas.clientHeight;
+  
   nextPieceCtx.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
   if (nextPiece) {
-    const offsetX = (nextPieceCanvas.width / BLOCK_SIZE - nextPiece[0].length) / 2;
-    const offsetY = (nextPieceCanvas.height / BLOCK_SIZE - nextPiece.length) / 2;
-    drawPiece(nextPiece, offsetX, offsetY, nextPieceCtx);
+    // 计算预览区域中心点
+    const centerX = nextPieceCanvas.width / 2;
+    const centerY = nextPieceCanvas.height / 2;
+    
+    // 计算方块组的整体宽度和高度
+    const pieceWidth = nextPiece[0].length * BLOCK_SIZE;
+    const pieceHeight = nextPiece.length * BLOCK_SIZE;
+    
+    // 计算方块组的左上角坐标，确保居中显示
+    const startX = centerX - pieceWidth / 2;
+    const startY = centerY - pieceHeight / 2;
+    
+    // 直接绘制方块，不再强制1:1比例
+    drawPiece(nextPiece, startX / BLOCK_SIZE, startY / BLOCK_SIZE, nextPieceCtx);
   }
 }
 
@@ -103,6 +126,15 @@ function rotatePiece(piece) {
       newPiece[x][piece.length - 1 - y] = piece[y][x];
     }
   }
+  
+  // 检查旋转后是否会超出边界
+  if (currentPieceX + newPiece[0].length > BOARD_WIDTH) {
+    return piece; // 如果会超出右边界，返回原方块
+  }
+  if (currentPieceX < 0) {
+    return piece; // 如果会超出左边界，返回原方块
+  }
+  
   return newPiece;
 }
 
@@ -397,6 +429,16 @@ let touchStartX = 0;
     linesElement.textContent = lines;
   }
   function draw() {
+    // 根据游戏板宽高比例计算方块大小
+    const container = document.querySelector('.game-container');
+    const containerWidth = container.clientWidth;
+    const displayWidth = Math.floor(containerWidth * 0.5);
+    BLOCK_SIZE = Math.floor(displayWidth / BOARD_WIDTH);
+    
+    // 设置canvas尺寸以匹配游戏板比例
+    canvas.width = BOARD_WIDTH * BLOCK_SIZE;
+    canvas.height = BOARD_HEIGHT * BLOCK_SIZE;
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBoard();
     if (currentPiece) {
