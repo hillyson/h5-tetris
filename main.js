@@ -15,7 +15,7 @@ function calculateBlockSize() {
   const container = document.querySelector('.game-container');
   const containerWidth = container.clientWidth;
   const displayWidth = Math.floor(containerWidth * 0.5);
-  BLOCK_SIZE = Math.floor(displayWidth / BOARD_WIDTH);
+  BLOCK_SIZE = Math.min(60, Math.floor(displayWidth / BOARD_WIDTH));
   return BLOCK_SIZE;
 }
 const BOARD_WIDTH = 10;
@@ -433,7 +433,8 @@ let touchStartX = 0;
     const container = document.querySelector('.game-container');
     const containerWidth = container.clientWidth;
     const displayWidth = Math.floor(containerWidth * 0.5);
-    BLOCK_SIZE = Math.floor(displayWidth / BOARD_WIDTH);
+    BLOCK_SIZE = Math.min(60, Math.floor(displayWidth / BOARD_WIDTH));
+    // BLOCK_SIZE = Math.floor(displayWidth / BOARD_WIDTH);
     
     // 设置canvas尺寸以匹配游戏板比例
     canvas.width = BOARD_WIDTH * BLOCK_SIZE;
